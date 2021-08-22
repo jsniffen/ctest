@@ -1,18 +1,18 @@
 #include "test.h"
 #include "math.c"
 
-void TestAbs() {
+void TestAbsNegative() {
 	int got = Abs(-1);
 	if (got != 1) {
 		Errorf("Abs(-1) = %d; want 1", got);
 	}
 }
 
-void TestAbs2() {
-	Fail();
+void TestAbsPositive() {
 	int got = Abs(1);
-	if (got != 0) {
+	if (got != 1) {
+		Errorf("Abs(1) = %d; want 1", got);
 	}
 }
 
-TestMain(TestAbs, TestAbs2);
+TestMain(TestAbsNegative, TestAbsPositive);
