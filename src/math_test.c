@@ -4,14 +4,14 @@
 void TestAbs() {
 	int got = Abs(-1);
 	if (got != 1) {
-		Errorf("Abs(-1) = %d; want 1\n", got);
+		Errorf("Abs(-1) = %d; want 1", got);
 	}
 }
 
 void TestAbs2() {
 	int got = Abs(1);
 	if (got != 1) {
-		Errorf("Abs(-1) = %d; want 1\n", got);
+		Errorf("Abs(-1) = %d; want 1", got);
 	}
 }
 

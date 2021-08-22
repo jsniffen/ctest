@@ -2,68 +2,35 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
 
 static bool total_pass = true;
 static bool pass = true;
 static bool verbose = false;
 
+static char global_file[256];
+static char global_func[256];
+static char global_message[256];
+static int global_line;
+
 #define Errorf(msg, ...) _Errorf(__func__, __FILE__, __LINE__, msg, ##__VA_ARGS__)
 void _Errorf(const char *func, char *file, int line, const char *msg, ...) {
+	strcpy(global_file, file);
+	strcpy(global_func, func);
+	global_line = line;
+
 	pass = false;
 
-	if (!verbose) printf("--- FAIL: %s\n", func);
-
-	printf("    %s:%d: ", file, line);
 	va_list ap;
 	va_start(ap, msg);
-	vprintf(msg, ap);
+	vsprintf(global_message, msg, ap);
 	va_end(ap);
-}
-
-#define AssertIntEquals(x, y) _AssertEquals(x, y, #x, #y, __FILE__, __func__, __LINE__)
-bool _AssertEquals(int x, int y, char *x_name, char *y_name, char *file, const char *func, int line) {
-	if (x != y) {
-		printf("--- FAIL: %s %s == %s\n", func, x_name, y_name);
-		printf("    expected: %d, got %d\n", x, y);
-		printf("    %s:%d\n", file, line);
-	}
-	return false;
-}
-
-# define Assert(exp) _Assert(exp, #exp, __FILE__, __func__, __LINE__)
-bool _Assert(bool pass, char *exp, char *file, const char *func, int line) {
-	if (!pass) {
-		printf("--- FAIL: %s %s\n", func, exp);
-		printf("    %s:%d\n", file, line);
-	}
-
-	return pass;
-}
-
-#define Run(...) _Run(__FILE__, __VA_ARGS__, 0)
-void _Run(char *file, ...) {
-	va_list ap;
-	va_start(ap, file);
-	bool (*func)();
-	while ((func = va_arg(ap, bool(*)())) != 0) {
-		(*func)();
-	}
-	va_end(ap);
-
-	if (pass) {
-		printf("PASS\nok\t%s\n", file);
-	} else {
-		printf("FAIL\nFAIL\t%s\n", file);
-	}
-}
-
-#define Test(args...) _Test(#args, args)
-void _Test(char *args, ...) {
-	printf("%s\n", args);
 }
 
 #define TestMain(fargs...) void main(int argv, char **args) {_TestMain(argv, args, __FILE__, #fargs, fargs, 0);}
 void _TestMain(int argv, char **args, char *file, char *fargs, ...) {
+	double total_time = 0;
+
 	for (int i = 0; i < argv; ++i) {
 		if (strcmp(args[i], "-v") == 0) {
 			verbose = true;
@@ -82,13 +49,25 @@ void _TestMain(int argv, char **args, char *file, char *fargs, ...) {
 		if (verbose) {
 			printf("=== RUN    %s\n", pch);
 		}
+
+		clock_t start = clock();
 		(*func)();
+		clock_t end = clock();
+		double time = ((double) (end - start)) / CLOCKS_PER_SEC;
+		total_time += time;
 
 		if (pass) {
-			if (verbose) printf("--- PASS:  %s\n", pch);
+			if (verbose) printf("--- PASS:  %s (%0.3fs)\n", pch, time);
 		} else {
 			total_pass = false;
-			if (verbose) printf("--- FAIL:  %s\n", pch);
+
+			if (verbose) {
+				printf("    %s:%d: %s\n", global_file, global_line, global_message);
+				printf("--- FAIL:  %s (%0.3fs)\n", pch, time);
+			} else {
+				printf("--- FAIL:  %s (%0.3fs)\n", pch, time);
+				printf("    %s:%d: %s\n", global_file, global_line, global_message);
+			}
 		}
 
 		pch = strtok(0, " ,");
@@ -98,7 +77,7 @@ void _TestMain(int argv, char **args, char *file, char *fargs, ...) {
 	if (total_pass) {
 		printf("PASS\nok\t%s\n", file);
 	} else {
-		printf("FAIL\t%s\n", file);
+		printf("FAIL\t%s\t%0.3fs\n", file, total_time);
 	}
 }
 
