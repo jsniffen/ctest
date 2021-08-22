@@ -9,9 +9,9 @@ void TestAbs() {
 }
 
 void TestAbs2() {
+	Fail();
 	int got = Abs(1);
-	if (got != 1) {
-		Errorf("Abs(-1) = %d; want 1", got);
+	if (got != 0) {
 	}
 }
 
